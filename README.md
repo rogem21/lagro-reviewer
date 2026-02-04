@@ -1,8 +1,8 @@
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lagro Reviewer: Career Guidance</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
@@ -51,6 +51,10 @@
         #profile-modal { display: none; }
         #profile-modal.flex { display: flex; }
         .profile-input { border: 1px solid #e6f4ee; }
+        /* Profile page scroll area */
+        #view-profile .profile-scroll { max-height: calc(100vh - 10.5rem); overflow-y: auto; padding-right: 0.5rem; }
+        #view-profile .profile-scroll::-webkit-scrollbar { width: 8px; }
+        #view-profile .profile-scroll::-webkit-scrollbar-thumb { background: rgba(5,150,105,0.4); border-radius: 6px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen flex flex-col overflow-hidden">
@@ -128,6 +132,7 @@
         </div>
 
         <div id="view-profile" class="hidden fade-in">
+            <div class="profile-scroll">
             <div class="mb-6">
                 <button onclick="goHome()" class="text-xs font-bold text-lagro-emerald hover:text-lagro-green mb-2 flex items-center gap-1">← BACK TO DASHBOARD</button>
                 <h2 class="text-3xl font-serif font-bold text-lagro-green">Profile</h2>
@@ -181,6 +186,11 @@
                     <h4 class="text-lg font-semibold text-lagro-green">Recommended Topics To Study</h4>
                     <div id="profile-page-recommendations" class="mt-3 text-sm text-slate-600"></div>
                 </div>
+                <div class="mt-6">
+                    <h4 class="text-lg font-semibold text-lagro-green">Recommended Topics To Study</h4>
+                    <div id="profile-page-recommendations" class="mt-3 text-sm text-slate-600"></div>
+                </div>
+            </div>
             </div>
         </div>
 
