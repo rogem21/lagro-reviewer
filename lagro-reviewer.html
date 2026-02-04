@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lagro Reviewer: Career Guidance</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'lagro-green': '#064e3b',
+                        'lagro-emerald': '#059669',
+                        'lagro-light': '#ecfdf5',
+                        'lagro-accent': '#facc15',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root{--lagro-green:#064e3b;--lagro-emerald:#059669;--lagro-light:#ecfdf5;--lagro-accent:#facc15;--muted:#94a3b8}
+        .chart-container { position: relative; width: 100%; max-width: 600px; height: 300px; margin: 0 auto; }
+        .subject-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2); }
+        .lesson-item:hover { background-color: #f0fdf4; padding-left: 1.5rem; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #059669; border-radius: 4px; }
+        
+        .lesson-content h3 { color: #064e3b; font-weight: 700; font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #059669; padding-bottom: 0.5rem; }
+        .lesson-content h4 { color: #059669; font-weight: 600; font-size: 1.1rem; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .lesson-content p { margin-bottom: 0.75rem; line-height: 1.6; color: #374151; }
+        .lesson-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #374151; }
+        .lesson-content li { margin-bottom: 0.5rem; }
+        .lesson-content strong { color: #064e3b; font-weight: 700; }
+        /* Profile UI */
+        #profile-menu { min-width: 12rem; }
+        #profile-modal { display: none; }
+        #profile-modal.flex { display: flex; }
+        .profile-input { border: 1px solid #e6f4ee; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-lagro-green border-b border-lagro-emerald shadow-md z-20 flex-none">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-inner overflow-hidden border border-emerald-400">
+                    <img src="lagro.png" 
+                         alt="Lagro Logo" 
+                         class="w-full h-full object-cover"
+                         onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg viewBox%3D%220 0 24 24%22 xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath d%3D%22M12 3L1 9l11 6 9-4.91V17h2V9L12 3z%22 fill%3D%22%23064e3b%22%2F%3E%3C%2Fsvg%3E'">
+                </div>
+                <h1 class="font-serif font-bold text-white text-xl tracking-tight hidden sm:block">Lagro Reviewer</h1>
+            </div>
+            
+            <nav class="flex text-sm font-medium text-emerald-100 overflow-hidden whitespace-nowrap">
+                <button onclick="goHome()" class="hover:text-white transition">Home</button>
+                <span id="crumb-subject-sep" class="mx-2 hidden">/</span>
+                <button id="crumb-subject" onclick="goBackToLessons()" class="hover:text-white transition hidden">...</button>
+                <span id="crumb-lesson-sep" class="mx-2 hidden">/</span>
+                <span id="crumb-lesson" class="text-white font-bold hidden">...</span>
+            </nav>
+
+            <div class="relative">
+                <button id="profile-btn" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-md" onclick="toggleProfileMenu(event)">
+                    <div id="profile-avatar" class="w-8 h-8 bg-white text-lagro-green rounded-full flex items-center justify-center font-bold">U</div>
+                    <span id="profile-name" class="hidden sm:inline text-sm">User</span>
+                    <span id="profile-gpa-badge" class="hidden sm:inline ml-2 text-xs bg-white/20 px-2 py-0.5 rounded text-white">—</span>
+                </button>
+                <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-emerald-100 z-30 overflow-hidden">
+                    <div id="menu-body"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow overflow-y-auto custom-scroll relative p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        
+        <div id="view-subjects" class="fade-in">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-serif font-bold text-lagro-green">Academic Dashboard</h2>
+                <p class="text-slate-500 mt-2">WAZUP LAGRONIANS!</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="subject-grid"></div>
+        </div>
+
+        <div id="view-lessons" class="hidden fade-in">
+            <div class="mb-6">
+                <button onclick="goHome()" class="text-xs font-bold text-lagro-emerald hover:text-lagro-green mb-2 flex items-center gap-1">← BACK TO DASHBOARD</button>
+                <h2 id="lesson-page-title" class="text-3xl font-serif font-bold text-lagro-green">Subject Title</h2>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden">
+                <ul id="lesson-list" class="divide-y divide-emerald-50"></ul>
+            </div>
+        </div>
+
+        <div id="view-content" class="hidden fade-in h-full flex flex-col">
+            <div class="mb-6 flex-none">
+                <button onclick="goBackToLessons()" class="text-xs font-bold text-lagro-emerald hover:text-lagro-green mb-2 flex items-center gap-1">← BACK TO LESSONS</button>
+                <h2 id="content-title" class="text-2xl font-serif font-bold text-lagro-green">Lesson Title</h2>
+            </div>
+
+            <div class="flex space-x-1 bg-emerald-50 p-1.5 rounded-xl mb-6 w-full max-w-md mx-auto flex-none shadow-inner">
+                <button onclick="switchTab('read')" id="tab-read" class="flex-1 py-2 text-sm font-bold rounded-lg shadow-sm bg-white text-lagro-green transition">📖 READ</button>
+                <button onclick="switchTab('visuals')" id="tab-visuals" class="flex-1 py-2 text-sm font-bold rounded-lg text-emerald-700 hover:bg-white/50 transition">📊 CHARTS</button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="flex-1 py-2 text-sm font-bold rounded-lg text-emerald-700 hover:bg-white/50 transition">🧠 QUIZ (10)</button>
+            </div>
+
+            <div class="flex-grow bg-white rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-10 overflow-y-auto custom-scroll relative mb-4">
+                <div id="content-read" class="lesson-content"></div>
+                <div id="content-visuals" class="hidden h-full flex flex-col items-center justify-center space-y-8"></div>
+                <div id="content-quiz" class="hidden"><div id="quiz-wrapper" class="max-w-2xl mx-auto"></div></div>
+            </div>
+        </div>
+
+        <div id="view-profile" class="hidden fade-in">
+            <div class="mb-6">
+                <button onclick="goHome()" class="text-xs font-bold text-lagro-emerald hover:text-lagro-green mb-2 flex items-center gap-1">← BACK TO DASHBOARD</button>
+                <h2 class="text-3xl font-serif font-bold text-lagro-green">Profile</h2>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl border border-emerald-100 p-6 sm:p-10">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div class="w-28 h-28 bg-emerald-50 rounded-lg flex items-center justify-center text-3xl font-bold text-lagro-green" id="profile-page-avatar">U</div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div id="profile-page-name" class="text-2xl font-bold text-lagro-green">Guest User</div>
+                                <div id="profile-page-email" class="text-sm text-slate-500">—</div>
+                            </div>
+                            <div>
+                                <button onclick="openProfileModal()" class="px-4 py-2 rounded bg-lagro-emerald text-white">Edit Profile</button>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-sm text-slate-600">Overall GPA: <strong id="profile-page-gpa">—</strong></div>
+                            <div class="text-sm text-slate-600 mt-2">Study Effectiveness: <strong id="profile-page-effectiveness">—</strong></div>
+                            <div class="mt-3">
+                                <div class="text-xs text-slate-500 mb-2">Effectiveness Progress</div>
+                                <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                    <div id="effectiveness-bar" class="h-3 bg-emerald-400" style="width:0%"></div>
+                                </div>
+                                <div id="effectiveness-label" class="text-xs text-slate-500 mt-1">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-lagro-green">Lesson GPA Breakdown</h4>
+                        <div id="profile-page-gpa-list" class="mt-3 text-sm text-slate-600"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold text-lagro-green">Performance Visuals</h4>
+                        <div class="mt-3 grid grid-cols-1 gap-4">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <canvas id="gpa-donut" height="140"></canvas>
+                            </div>
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <canvas id="gpa-bar" height="140"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-lg font-semibold text-lagro-green">Recommended Topics To Study</h4>
+                    <div id="profile-page-recommendations" class="mt-3 text-sm text-slate-600"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 hidden items-center justify-center z-40">
+        <div class="absolute inset-0 bg-black/40" onclick="closeProfileModal()"></div>
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 z-50">
+            <h3 class="text-lg font-bold text-lagro-green mb-4">Your Profile</h3>
+            <div class="grid gap-3">
+                <label class="text-sm">Name
+                    <input id="input-name" class="mt-1 w-full border rounded p-2 profile-input" />
+                </label>
+                <label class="text-sm">Email
+                    <input id="input-email" class="mt-1 w-full border rounded p-2 profile-input" />
+                </label>
+            </div>
+            <div class="mt-4">
+                <div class="text-sm text-slate-600">Overall GPA: <strong id="profile-gpa">—</strong></div>
+                <div id="profile-gpa-list" class="mt-2 text-sm text-slate-500"></div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="closeProfileModal()" class="px-4 py-2 rounded bg-slate-100">Cancel</button>
+                <button onclick="saveProfile()" class="px-4 py-2 rounded bg-lagro-emerald text-white">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 hidden items-center justify-center z-50">
+        <div class="absolute inset-0 bg-black/40" onclick="closeLoginModal()"></div>
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 z-50">
+            <h3 class="text-lg font-bold text-lagro-green mb-4">Sign In</h3>
+            <div class="grid gap-3">
+                <label class="text-sm">Email
+                    <input id="login-email" type="email" class="mt-1 w-full border rounded p-2 profile-input" />
+                </label>
+                <label class="text-sm">Password
+                    <input id="login-password" type="password" class="mt-1 w-full border rounded p-2 profile-input" />
+                </label>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <div class="text-sm text-slate-500">No backend — demo-only login</div>
+                <div class="flex gap-2">
+                    <button onclick="closeLoginModal()" class="px-4 py-2 rounded bg-slate-100">Cancel</button>
+                    <button onclick="performLogin()" class="px-4 py-2 rounded bg-lagro-emerald text-white">Sign In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const subjects = {
+            "career": {
+                id: "career",
+                title: "Career Guidance",
+                icon: "🎓",
+                color: "bg-emerald-50 text-lagro-green border-emerald-200",
+                desc: "Higher Education Pathways, Holistic Career Dev, and Employment Types.",
+                lessons: [
+                    {
+                        id: "l1",
+                        title: "Lesson 1: Higher Education Pathways",
+                        desc: "Academic, Vocational, Pathway/Foundation, and Transfer routes.",
+                        content: {
+                            read: `
+                                <h3>1. Academic Pathways</h3>
+                                <p>Traditional routes focused on theoretical knowledge and academic disciplines.</p>
+                                <h4>Undergraduate Degrees:</h4>
+                                <ul>
+                                    <li><strong>Associate Degree:</strong> Usually 2 years at a community or technical college.</li>
+                                    <li><strong>Bachelor’s Degree:</strong> Usually 3–4 years at a university or college.</li>
+                                </ul>
+                                <h4>Graduate Degrees:</h4>
+                                <ul>
+                                    <li><strong>Master’s Degree:</strong> 1–2 years after a bachelor's degree.</li>
+                                    <li><strong>Doctoral Degree:</strong> 3–7 years after a master's or directly after a bachelor's.</li>
+                                </ul>
+                                <h4>Special Programs:</h4>
+                                <ul>
+                                    <li><strong>Honors Programs:</strong> For high-achieving undergraduates, often involving research.</li>
+                                    <li><strong>Dual Degrees / Double Majors:</strong> Earning two degrees simultaneously.</li>
+                                    <li><strong>Accelerated Programs:</strong> Faster completion (e.g., 3-year bachelor's); often whole-year round instead of by semester.</li>
+                                    <li><strong>Pre-Professional Programs:</strong> For careers like medicine, law, or education.</li>
+                                </ul>
+                                <h3>2. Vocational / Technical Pathways</h3>
+                                <p>Focused on practical skills and job-specific training.</p>
+                                <ul>
+                                    <li><strong>Certificates and Diplomas:</strong> Often 6 months to 2 years in technical schools or community colleges.</li>
+                                    <li><strong>Apprenticeships:</strong> Work-based learning with classroom instruction in skilled trades.</li>
+                                    <li><strong>Traineeships:</strong> Similar to apprenticeships, but often shorter and less technical.</li>
+                                </ul>
+                                <h3>3. Pathway / Foundation Programs</h3>
+                                <ul>
+                                    <li><strong>University Foundation Year:</strong> One-year programs preparing students for undergraduate studies.</li>
+                                    <li><strong>English Language Pathways:</strong> For international students needing to improve language skills.</li>
+                                    <li><strong>Bridging Courses:</strong> Short programs to help students meet academic prerequisites.</li>
+                                </ul>
+                                <h3>4. Transfer Pathways</h3>
+                                <ul>
+                                    <li><strong>2+2 Programs:</strong> Start with an associate degree then transfer to a university for the final two years.</li>
+                                    <li><strong>Articulation Agreements:</strong> Formal partnerships that simplify credit transfer.</li>
+                                </ul>
+                                <h3>5. Online / Distance Learning Pathways</h3>
+                                <ul>
+                                    <li><strong>MOOCs:</strong> Massive Open Online Courses (free or low-cost).</li>
+                                    <li><strong>Microcredentials:</strong> Targeted, focused approach to learning a specific practical skill.</li>
+                                    <li><strong>Blended Learning:</strong> A mix of online and on-campus instruction.</li>
+                                </ul>
+                            `,
+                            chartType: "bar",
+                            quiz: [
+                                { q: "How long is a typical Associate Degree?", options: ["1 year", "2 years", "4 years", "6 months"], a: 1 },
+                                { q: "Which program is designed for high-achieving undergraduates and often involves research?", options: ["Bridging Course", "Honors Program", "Vocational Course", "Traineeship"], a: 1 },
+                                { q: "What is an 'Accelerated Program'?", options: ["A program for athletes", "Faster completion via year-round study", "A program for slow learners", "A degree taken via radio"], a: 1 },
+                                { q: "Which pathway focuses on practical skills and job-specific training?", options: ["Academic", "Vocational", "Foundation", "Transfer"], a: 1 },
+                                { q: "What does a '2+2' program allow a student to do?", options: ["Take 4 classes", "Transfer from community college to university", "Graduate in 2 years", "Get two degrees in 2 years"], a: 1 },
+                                { q: "What are MOOCs?", options: ["Mandatory Online Only Classes", "Massive Open Online Courses", "Major Office Operations Code", "Mixed Online Open Credit"], a: 1 },
+                                { q: "Which program is a one-year prep for undergraduate studies?", options: ["Bridging", "University Foundation Year", "Doctoral", "Microcredential"], a: 1 },
+                                { q: "What allows entry based on life or work experience?", options: ["RPL", "Dual Degree", "Honors", "Articulations"], a: 0 },
+                                { q: "How long are Certificates and Diplomas usually?", options: ["4 years", "6 months to 2 years", "10 years", "1 month"], a: 1 },
+                                { q: "What involves work-based learning in skilled trades?", options: ["MOOC", "Apprenticeship", "Bridging", "Associate Degree"], a: 1 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "l2",
+                        title: "Lesson 2: Holistic Career Development",
+                        desc: "Whole person lens and key career choice influences.",
+                        content: {
+                            read: `
+                                <h3>1. Career Pathways: A Holistic Perspective</h3>
+                                <p>Career development is viewed through a <strong>'whole person' lens</strong>, considering skills, interests, values, personality, life circumstances, and cultural background. Pathways are <strong>not linear</strong>.</p>
+                                <h3>2. Key Influences on Career Choice</h3>
+                                <ul>
+                                    <li><strong>Parental Influence:</strong> Recognized as the most significant factor.</li>
+                                    <li><strong>Peer/Media Exposure:</strong> TikTok/YouTube trends (e.g., vloggers, K-pop idols) shape dreams.</li>
+                                    <li><strong>Financial Constraints:</strong> Leads students toward quicker workforce routes (e.g., TESDA NC) over 4-year degrees.</li>
+                                    <li><strong>Gender Roles:</strong> Societal push for females (teaching/caregiving) vs males (engineering/technical).</li>
+                                    <li><strong>Interest and Aptitude:</strong> Central, but can be overridden by external pressures (e.g., parents wanting medical vs IT).</li>
+                                </ul>
+                                <h3>3. Summary of Academic/Vocational (Review)</h3>
+                                <p>This lesson reiterates that Academic pathways are theoretical, while Vocational pathways are practical skills-based.</p>
+                            `,
+                            chartType: "doughnut",
+                            quiz: [
+                                { q: "What is the 'most significant' factor in career choice?", options: ["Media", "Peers", "Parental Influence", "Weather"], a: 2 },
+                                { q: "Career pathways are described as being:", options: ["Linear", "Not linear", "Strictly vertical", "Short"], a: 1 },
+                                { q: "The 'whole person' lens includes which of the following?", options: ["Only skills", "Interests, values, and life circumstances", "Only grades", "Strictly financial status"], a: 1 },
+                                { q: "Why might a student choose a TESDA NC course over a 4-year degree?", options: ["They hate studying", "Financial constraints", "Gender roles", "It's more prestigious"], a: 1 },
+                                { q: "Social trends on which platforms play a role in career choice?", options: ["Newspapers", "TikTok and YouTube", "Radio", "Posters"], a: 1 },
+                                { q: "Gender roles often push males toward which fields?", options: ["Caregiving", "Engineering/Technical", "Teaching", "Nursing"], a: 1 },
+                                { q: "What can sometimes override a student's aptitude?", options: ["Internal hobbies", "External pressures (e.g. Parents)", "Reading speed", "Sleep habits"], a: 1 },
+                                { q: "Gender roles often push females toward which fields?", options: ["Aviation", "Teaching/Caregiving", "Construction", "Mining"], a: 1 },
+                                { q: "A 'Holistic Perspective' considers which of the following?", options: ["Cultural background", "Personality", "Life circumstances", "All of the above"], a: 3 },
+                                { q: "Vocational pathways are focused on what?", options: ["Theoretical research", "Practical skills/Job-specific training", "Pure philosophy", "Ancient history"], a: 1 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "l3",
+                        title: "Lesson 3: Types of Employment",
+                        desc: "Work hours, duration, and relationship with employers.",
+                        content: {
+                            read: `
+                                <h3>1. Definition of Employment Types</h3>
+                                <p>Describes the nature of a work arrangement, categorized by hours, duration, and worker-employer relationship.</p>
+                                <h3>2. By Work Hours and Duration</h3>
+                                <ul>
+                                    <li><strong>Full-Time:</strong> Considered permanent and have job security.</li>
+                                    <li><strong>Part-Time:</strong> Typically paid an hourly wage with limited or no benefits.</li>
+                                    <li><strong>Casual:</strong> Work is flexible but provides no job security or paid leave.</li>
+                                    <li><strong>Seasonal:</strong> Employment is temporary and ends when the season is over.</li>
+                                </ul>
+                                <h3>3. By Relationship with Employer</h3>
+                                <ul>
+                                    <li><strong>Gig:</strong> The worker is an independent contractor, not a traditional employee.</li>
+                                    <li><strong>Freelance:</strong> Operates own business, sets own hours, handles own taxes and benefits.</li>
+                                    <li><strong>Contractual:</strong> Governed by a contract outlining start/end dates, scope, and pay.</li>
+                                </ul>
+                                <h3>4. Resume</h3>
+                                <p>A resume originated from the French word <strong>résumé</strong>, which means <strong>'summary'</strong>.</p>
+                            `,
+                            chartType: "none",
+                            quiz: [
+                                { q: "Which employment type is considered permanent with job security?", options: ["Casual", "Seasonal", "Full-Time", "Gig"], a: 2 },
+                                { q: "What does the French word 'résumé' mean?", options: ["Job", "History", "Summary", "Letter"], a: 2 },
+                                { q: "Which type of employment has no job security or paid leave?", options: ["Full-Time", "Contractual", "Casual", "Permanent"], a: 2 },
+                                { q: "In which type is the worker an independent contractor, not an employee?", options: ["Full-Time", "Seasonal", "Gig", "Part-Time"], a: 2 },
+                                { q: "Freelancers are responsible for their own:", options: ["Taxes", "Benefits", "Hours", "All of the above"], a: 3 },
+                                { q: "Which employment ends when a specific season is over?", options: ["Full-Time", "Casual", "Seasonal", "Freelance"], a: 2 },
+                                { q: "How are Part-Time workers typically paid?", options: ["Annual salary", "Hourly wage", "Gift cards", "Unpaid"], a: 1 },
+                                { q: "Which arrangement is governed by start/end dates and specific scope of work?", options: ["Casual", "Contractual", "Gig", "Permanent"], a: 1 },
+                                { q: "What describes the nature of a work arrangement?", options: ["Aptitude", "Employment Type", "Personality", "Major"], a: 1 },
+                                { q: "Which worker operates their own business and sets their own hours?", options: ["Full-Time Employee", "Freelancer", "Casual Worker", "Seasonal Worker"], a: 1 }
+                            ]
+                        }
+                    }
+                ]
+            }
+        };
+
+        let currentSubject = null, currentLesson = null, currentChart = null;
+        let currentQuizState = null;
+
+        function goHome() { currentSubject = null; currentLesson = null; renderSubjects(); showView('view-subjects'); updateBreadcrumbs(); }
+        function selectSubject(id) { currentSubject = subjects[id]; renderLessons(); showView('view-lessons'); updateBreadcrumbs(); }
+        function goBackToLessons() { currentLesson = null; showView('view-lessons'); updateBreadcrumbs(); }
+        function selectLesson(id) { currentLesson = currentSubject.lessons.find(l => l.id === id); renderContent(); showView('view-content'); updateBreadcrumbs(); }
+        function showView(id) { ['view-subjects', 'view-lessons', 'view-content', 'view-profile'].forEach(v => { const el = document.getElementById(v); if (el) el.classList.add('hidden'); }); const target = document.getElementById(id); if (target) target.classList.remove('hidden'); }
+        
+        function updateBreadcrumbs() {
+            const s = document.getElementById('crumb-subject'), l = document.getElementById('crumb-lesson');
+            document.getElementById('crumb-subject-sep').classList.toggle('hidden', !currentSubject);
+            s.classList.toggle('hidden', !currentSubject);
+            if (currentSubject) s.innerText = currentSubject.title;
+            document.getElementById('crumb-lesson-sep').classList.toggle('hidden', !currentLesson);
+            l.classList.toggle('hidden', !currentLesson);
+            if (currentLesson) l.innerText = currentLesson.title;
+        }
+
+        function renderSubjects() {
+            const g = document.getElementById('subject-grid'); g.innerHTML = '';
+            Object.values(subjects).forEach(sub => {
+                g.innerHTML += `<div onclick="selectSubject('${sub.id}')" class="subject-card bg-white p-8 rounded-2xl border ${sub.color.split(' ')[2]} shadow-sm cursor-pointer transition flex flex-col items-center text-center">
+                    <div class="w-20 h-20 rounded-2xl ${sub.color.split(' ')[0]} flex items-center justify-center text-4xl mb-4 shadow-sm">${sub.icon}</div>
+                    <h3 class="text-xl font-extrabold text-lagro-green mb-2">${sub.title}</h3>
+                    <p class="text-sm text-slate-500 font-medium">${sub.desc}</p>
+                </div>`;
+            });
+        }
+
+        function renderLessons() {
+            document.getElementById('lesson-page-title').innerText = currentSubject.title;
+            const list = document.getElementById('lesson-list'); list.innerHTML = '';
+            currentSubject.lessons.forEach(ls => {
+                list.innerHTML += `<li onclick="selectLesson('${ls.id}')" class="lesson-item p-6 cursor-pointer transition flex justify-between items-center group">
+                    <div><h4 class="text-lg font-bold text-lagro-green group-hover:text-emerald-600 transition">${ls.title}</h4><p class="text-sm text-slate-500 mt-1">${ls.desc}</p></div>
+                    <span class="text-lagro-emerald opacity-50 group-hover:opacity-100 transition font-bold">START QUIZ →</span>
+                </li>`;
+            });
+        }
+
+        function renderContent() {
+            document.getElementById('content-title').innerText = currentLesson.title;
+            document.getElementById('content-read').innerHTML = currentLesson.content.read;
+            switchTab('read');
+            renderQuiz();
+        }
+
+        function switchTab(t) {
+            ['read', 'visuals', 'quiz'].forEach(tab => {
+                document.getElementById(`tab-${tab}`).classList.toggle('bg-white', tab === t);
+                document.getElementById(`tab-${tab}`).classList.toggle('text-lagro-green', tab === t);
+                document.getElementById(`content-${tab}`).classList.toggle('hidden', tab !== t);
+            });
+            if (t === 'visuals') renderVisuals();
+        }
+
+        function renderVisuals() {
+            const c = document.getElementById('content-visuals'); c.innerHTML = '';
+            if (currentLesson.content.chartType === 'none') { c.innerHTML = '<p class="text-slate-400 font-bold italic">Visual aids are not required for this topic.</p>'; return; }
+            const cw = document.createElement('div'); cw.className = 'chart-container';
+            const can = document.createElement('canvas'); cw.appendChild(can); c.appendChild(cw);
+            if (currentChart) currentChart.destroy();
+            const ctx = can.getContext('2d');
+            if (currentLesson.content.chartType === 'bar') {
+                currentChart = new Chart(ctx, { type: 'bar', data: { labels: ['Associate', 'Bachelor', 'Master', 'Doctoral'], datasets: [{ label: 'Approx Years Required', data: [2, 4, 2, 5], backgroundColor: '#059669' }] }, options: { responsive: true, maintainAspectRatio: false }});
+            } else {
+                currentChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Parental', 'Media', 'Financial', 'Personal'], datasets: [{ data: [60, 20, 10, 10], backgroundColor: ['#064e3b', '#059669', '#10b981', '#6ee7b7'] }] }, options: { responsive: true, maintainAspectRatio: false }});
+            }
+        }
+
+        function renderQuiz() {
+            const w = document.getElementById('quiz-wrapper'); w.innerHTML = '';
+            const quiz = currentLesson.content.quiz;
+            currentQuizState = { lessonId: currentLesson.id, total: quiz.length, answered: 0, correct: 0 };
+            quiz.forEach((q, i) => {
+                const d = document.createElement('div'); d.className = 'mb-10 p-8 bg-emerald-50/50 rounded-2xl border border-emerald-100 shadow-sm';
+                let h = `<p class="font-extrabold text-lagro-green text-lg mb-6">Q${i+1}: ${q.q}</p><div class="grid gap-3">`;
+                q.options.forEach((o, oi) => { h += `<button onclick="checkAnswer(this, ${q.a === oi})" data-correct="${q.a === oi}" class="w-full text-left px-5 py-4 bg-white border-2 border-transparent rounded-xl hover:border-emerald-300 transition-all font-semibold text-slate-700 shadow-sm">${o}</button>`; });
+                h += `</div><p class="feedback hidden mt-5 font-bold text-center"></p>`;
+                d.innerHTML = h; w.appendChild(d);
+            });
+            // result area
+            const res = document.createElement('div'); res.id = 'quiz-result'; res.className = 'mt-6 text-center text-sm text-slate-600'; w.appendChild(res);
+        }
+
+        // Profile handling
+        let profile = { name: 'Guest User', email: '' };
+
+        function loadProfile() {
+            try {
+                const raw = localStorage.getItem('lagro_profile');
+                if (raw) profile = JSON.parse(raw);
+            } catch (e) { profile = { name: 'Guest User', email: '' }; }
+            updateProfileUI();
+        }
+
+        function updateProfileUI() {
+            const elName = document.getElementById('profile-name');
+            const elAvatar = document.getElementById('profile-avatar');
+            const menu = document.getElementById('menu-body');
+            if (elName) elName.innerText = profile.name || 'User';
+            if (elAvatar) {
+                const parts = (profile.name || 'U').split(' ').filter(Boolean);
+                const initials = parts.length === 1 ? parts[0].slice(0,1) : (parts[0][0] + (parts[1] ? parts[1][0] : ''));
+                elAvatar.innerText = (initials || 'U').toUpperCase();
+            }
+            if (!menu) return;
+            // Build dynamic menu depending on login state
+            if (profile && profile.email) {
+                menu.innerHTML = `
+                    <div class="p-3 border-b text-sm text-slate-700">Signed in as <strong id="menu-username">${escapeHtml(profile.name)}</strong></div>
+                    <button onclick="showProfilePage()" class="w-full text-left px-4 py-2 hover:bg-emerald-50">View Profile</button>
+                    <button onclick="goHome()" class="w-full text-left px-4 py-2 hover:bg-emerald-50">Dashboard</button>
+                    <button onclick="logout()" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">Logout</button>
+                `;
+            } else {
+                menu.innerHTML = `
+                    <div class="p-3 border-b text-sm text-slate-700">Not signed in</div>
+                    <button onclick="openLoginModal()" class="w-full text-left px-4 py-2 hover:bg-emerald-50">Sign In</button>
+                    <button onclick="openProfileModal()" class="w-full text-left px-4 py-2 hover:bg-emerald-50">Create Profile</button>
+                    <button onclick="goHome()" class="w-full text-left px-4 py-2 hover:bg-emerald-50">Dashboard</button>
+                `;
+            }
+            // update GPA displays every time the menu changes
+            populateProfileDisplays();
+        }
+
+        // populate modal and header GPA displays
+        function populateProfileDisplays() {
+            const gpaEl = document.getElementById('profile-gpa');
+            const listEl = document.getElementById('profile-gpa-list');
+            const badge = document.getElementById('profile-gpa-badge');
+            const val = (profile && typeof profile.gpa === 'number') ? profile.gpa : null;
+            if (gpaEl) gpaEl.innerText = val !== null ? val.toFixed(2) : '—';
+            if (badge) {
+                if (val !== null) { badge.innerText = `GPA ${val.toFixed(2)}`; badge.classList.remove('hidden'); }
+                else { badge.innerText = '—'; badge.classList.add('hidden'); }
+            }
+            if (listEl) {
+                const rec = profile.gpaRecords || {};
+                const keys = Object.keys(rec);
+                if (!keys.length) { listEl.innerHTML = '<em>No lesson GPAs yet.</em>'; return; }
+                let html = '<ul class="list-disc pl-4">';
+                keys.forEach(k => { html += `<li>${escapeHtml(k)}: <strong>${(rec[k]||0).toFixed(2)}</strong></li>`; });
+                html += '</ul>';
+                listEl.innerHTML = html;
+            }
+            // show study effectiveness in menu/profile small badge if available
+            const eff = (profile && typeof profile.studyEffectiveness === 'number') ? profile.studyEffectiveness : null;
+            const effBadge = document.getElementById('profile-gpa-badge');
+            if (effBadge && eff !== null) { effBadge.innerText = `GPA ${val.toFixed(2)} · ${Math.round(eff)}%`; effBadge.classList.remove('hidden'); }
+        }
+
+        function showProfilePage() {
+            renderProfilePage();
+            showView('view-profile');
+            // update breadcrumbs: show Profile as current
+            document.getElementById('crumb-subject-sep').classList.remove('hidden');
+            const s = document.getElementById('crumb-subject'); s.classList.remove('hidden'); s.innerText = 'Profile';
+            document.getElementById('crumb-lesson-sep').classList.add('hidden'); document.getElementById('crumb-lesson').classList.add('hidden');
+        }
+
+        let profileGpaChart = null, profileBarChart = null;
+
+        function renderProfilePage() {
+            document.getElementById('profile-page-name').innerText = profile.name || 'Guest User';
+            document.getElementById('profile-page-email').innerText = profile.email || '—';
+            document.getElementById('profile-page-avatar').innerText = (function(){
+                const parts = (profile.name||'U').split(' ').filter(Boolean);
+                const initials = parts.length === 1 ? parts[0].slice(0,1) : (parts[0][0] + (parts[1]?parts[1][0]:''));
+                return (initials||'U').toUpperCase();
+            })();
+            const g = (profile && typeof profile.gpa === 'number') ? profile.gpa.toFixed(2) : '—';
+            document.getElementById('profile-page-gpa').innerText = g;
+            const eff = (profile && typeof profile.studyEffectiveness === 'number') ? Math.round(profile.studyEffectiveness) + '%' : '—';
+            document.getElementById('profile-page-effectiveness').innerText = eff;
+            const listEl = document.getElementById('profile-page-gpa-list');
+            const rec = profile.gpaRecords || {};
+            const keys = Object.keys(rec);
+            if (!keys.length) { listEl.innerHTML = '<em>No lesson GPAs yet.</em>'; return; }
+            let html = '<ul class="list-disc pl-4">';
+            keys.forEach(k => { html += `<li>${escapeHtml(k)}: <strong>${(rec[k]||0).toFixed(2)}</strong></li>`; });
+            html += '</ul>';
+            listEl.innerHTML = html;
+
+            // Draw donut chart for GPA (4.0 scale)
+            try { if (profileGpaChart) profileGpaChart.destroy(); } catch (e) {}
+            const donut = document.getElementById('gpa-donut');
+            if (donut) {
+                const gval = (profile && typeof profile.gpa === 'number') ? profile.gpa : 0;
+                const data = { datasets: [{ data: [gval, Math.max(0, 4 - gval)], backgroundColor: ['#059669', '#e6f4ee'] }], labels: ['GPA','Remaining'] };
+                profileGpaChart = new Chart(donut.getContext('2d'), { type: 'doughnut', data, options: { cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } });
+            }
+
+            // Draw bar chart for lesson percentages (if available)
+            try { if (profileBarChart) profileBarChart.destroy(); } catch (e) {}
+            const bar = document.getElementById('gpa-bar');
+            if (bar) {
+                const percRec = profile.percentRecords || {};
+                const labels = Object.keys(percRec);
+                const vals = labels.map(k => percRec[k]);
+                const bdata = { labels, datasets: [{ label: 'Percent', data: vals, backgroundColor: '#10b981' }] };
+                profileBarChart = new Chart(bar.getContext('2d'), { type: 'bar', data: bdata, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } } });
+            }
+            // Effectiveness progress bar
+            const effVal = (profile && typeof profile.studyEffectiveness === 'number') ? Math.round(profile.studyEffectiveness) : null;
+            const effBar = document.getElementById('effectiveness-bar');
+            const effLabel = document.getElementById('effectiveness-label');
+            if (effVal !== null && effBar && effLabel) {
+                effBar.style.width = `${Math.min(100, Math.max(0, effVal))}%`;
+                effLabel.innerText = `${effVal}% average completion`; 
+            } else if (effLabel) { effLabel.innerText = 'No study data yet.'; }
+
+            // Recommendations: pick lowest-performing lessons (percent) or those below threshold
+            const recContainer = document.getElementById('profile-page-recommendations');
+            if (recContainer) {
+                const percRec = profile.percentRecords || {};
+                const items = Object.keys(percRec).map(k => ({ id: k, pct: percRec[k] }));
+                if (!items.length) { recContainer.innerHTML = '<em>No recommendations yet — take quizzes to get insights.</em>'; }
+                else {
+                    // sort ascending (lowest first)
+                    items.sort((a,b) => a.pct - b.pct);
+                    // choose lessons below 75% or the 3 lowest
+                    const threshold = 75;
+                    const filtered = items.filter(x => x.pct < threshold);
+                    const pick = (filtered.length ? filtered : items.slice(0, Math.min(3, items.length)));
+                    let out = '<ul class="space-y-2">';
+                    pick.forEach(it => {
+                        const found = findLessonById(it.id);
+                        const title = found ? escapeHtml(found.lesson.title) : escapeHtml(it.id);
+                        out += `<li class="flex items-center justify-between"><div>${title} <span class="text-xs text-slate-400">(${Math.round(it.pct)}%)</span></div><div><button onclick="goToLessonFromProfile('${it.id}')" class="px-3 py-1 rounded bg-emerald-50 text-emerald-700 text-xs">Study</button></div></li>`;
+                    });
+                    out += '</ul>';
+                    recContainer.innerHTML = out;
+                }
+            }
+        }
+
+        function findLessonById(lessonId) {
+            for (const sid in subjects) {
+                const sub = subjects[sid];
+                const lesson = (sub.lessons || []).find(l => l.id === lessonId);
+                if (lesson) return { subjectId: sid, subject: sub, lesson };
+            }
+            return null;
+        }
+
+        function goToLessonFromProfile(lessonId) {
+            const found = findLessonById(lessonId);
+            if (!found) { alert('Lesson not found'); return; }
+            currentSubject = subjects[found.subjectId];
+            currentLesson = found.lesson; 
+            // render content directly
+            renderContent();
+            showView('view-content');
+            updateBreadcrumbs();
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+        }
+
+        // Login modal handlers
+        function openLoginModal() {
+            const m = document.getElementById('login-modal'); if (!m) return; m.classList.remove('hidden'); m.classList.add('flex');
+            const pm = document.getElementById('profile-menu'); if (pm) pm.classList.add('hidden');
+        }
+
+        function closeLoginModal() { const m = document.getElementById('login-modal'); if (!m) return; m.classList.add('hidden'); m.classList.remove('flex'); }
+
+        function performLogin() {
+            const email = (document.getElementById('login-email')||{}).value || '';
+            const pwd = (document.getElementById('login-password')||{}).value || '';
+            if (!email || !pwd) { alert('Please enter email and password (demo).'); return; }
+            // Demo-only: create profile from email
+            const nameGuess = email.split('@')[0].replace(/[._\-]/g,' ').replace(/\d+/g,' ');
+            profile = { name: (nameGuess.split(' ').map(s=>s[0]?.toUpperCase()+s.slice(1)).join(' ') || email), email: email };
+            try { localStorage.setItem('lagro_profile', JSON.stringify(profile)); } catch (e) {}
+            updateProfileUI(); closeLoginModal();
+        }
+
+        function toggleProfileMenu(e) {
+            e.stopPropagation();
+            const m = document.getElementById('profile-menu');
+            if (m) m.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', () => { const m = document.getElementById('profile-menu'); if (m) m.classList.add('hidden'); });
+
+        function openProfileModal() {
+            const m = document.getElementById('profile-modal');
+            if (!m) return;
+            document.getElementById('input-name').value = profile.name || '';
+            document.getElementById('input-email').value = profile.email || '';
+            m.classList.remove('hidden'); m.classList.add('flex');
+            const pm = document.getElementById('profile-menu'); if (pm) pm.classList.add('hidden');
+        }
+
+        function closeProfileModal() {
+            const m = document.getElementById('profile-modal'); if (!m) return; m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function saveProfile() {
+            const n = document.getElementById('input-name').value.trim();
+            const e = document.getElementById('input-email').value.trim();
+            profile.name = n || profile.name;
+            profile.email = e || profile.email;
+            try { localStorage.setItem('lagro_profile', JSON.stringify(profile)); } catch (err) { }
+            updateProfileUI(); closeProfileModal();
+        }
+
+        function logout() {
+            try { localStorage.removeItem('lagro_profile'); } catch (e) {}
+            profile = { name: 'Guest User', email: '' };
+            updateProfileUI();
+        }
+
+        window.checkAnswer = function(btn, isCorrect) {
+            const p = btn.parentElement; const f = p.parentElement.querySelector('.feedback');
+            Array.from(p.children).forEach(b => { b.disabled = true; b.classList.add('opacity-40'); });
+            btn.classList.replace('border-transparent', isCorrect ? 'border-green-500' : 'border-red-500');
+            btn.classList.add(isCorrect ? 'bg-green-50' : 'bg-red-50');
+            btn.classList.remove('opacity-40');
+            f.innerText = isCorrect ? "CORRECT ✅" : "WRONG ❌";
+            f.className = `feedback mt-5 font-black text-center ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+            f.classList.remove('hidden');
+
+            // update quiz state
+            if (!currentQuizState) return;
+            currentQuizState.answered += 1;
+            if (isCorrect) currentQuizState.correct += 1;
+
+            // when finished, compute lesson score and GPA
+            if (currentQuizState.answered >= currentQuizState.total) {
+                const percent = Math.round((currentQuizState.correct / currentQuizState.total) * 100);
+                const lessonGpa = computeLessonGPA(percent);
+                // update profile records (store percent and gpa)
+                updateProfileGPA(currentQuizState.lessonId, lessonGpa, percent);
+                const res = document.getElementById('quiz-result');
+                if (res) res.innerHTML = `<div class="p-4 rounded-md bg-white border text-slate-700 shadow-sm">You scored <strong>${percent}%</strong>. Lesson GPA: <strong>${lessonGpa.toFixed(2)}</strong>. Overall GPA: <strong>${(profile.gpa || 0).toFixed(2)}</strong></div>`;
+            }
+        };
+
+        function computeLessonGPA(percent) {
+            if (percent >= 90) return 4.0;
+            if (percent >= 80) return 3.5;
+            if (percent >= 70) return 3.0;
+            if (percent >= 60) return 2.5;
+            return 2.0;
+        }
+
+        function updateProfileGPA(lessonId, lessonGpa, percent) {
+            if (!profile) profile = { name: 'Guest User', email: '' };
+            if (!profile.gpaRecords) profile.gpaRecords = {};
+            if (!profile.percentRecords) profile.percentRecords = {};
+            profile.gpaRecords[lessonId] = lessonGpa;
+            if (typeof percent === 'number') profile.percentRecords[lessonId] = percent;
+            // compute average GPA
+            const gvals = Object.values(profile.gpaRecords || {});
+            const gavg = gvals.reduce((s, v) => s + v, 0) / (gvals.length || 1);
+            profile.gpa = gavg;
+            // compute average percent as study effectiveness
+            const pvals = Object.values(profile.percentRecords || {});
+            const pavg = pvals.length ? (pvals.reduce((s, v) => s + v, 0) / pvals.length) : null;
+            profile.studyEffectiveness = pavg;
+            try { localStorage.setItem('lagro_profile', JSON.stringify(profile)); } catch (e) {}
+            updateProfileUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { loadProfile(); renderSubjects(); });
+    </script>
+</body>
+</html>
